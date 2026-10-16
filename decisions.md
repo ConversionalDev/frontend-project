@@ -303,4 +303,36 @@ Consumers import from the folder, not the file: `import { LyricLine } from '../c
 
 ---
 
+---
+
+## Phase 3 implementation decisions
+
+### 26. Stamp reads `audioRef.current.currentTime` directly, not from `TimeContext`
+
+**Decision:** The Enter key handler in `EditorScreen` reads `toMs(audioRef.current.currentTime)` at the moment of the keypress rather than using `currentTimeMs` from `TimeContext`.
+
+**Why precision:** `currentTimeMs` is updated by `timeupdate` events which fire ~4×/second (every ~250ms). At the moment a key is pressed, that value could be up to 250ms stale. Reading directly from the audio element gives the exact position at keypress time — materially more accurate for a stamping tool where the goal is to place the lyric at the right beat.
+
+**Why performance:** It also removes `EditorScreen` from `TimeContext`'s subscriber list entirely, so `EditorScreen` no longer re-renders 4×/second. Only `LyricsList` and `AudioPlayer` (which genuinely need live time) subscribe to `TimeContext`.
+
+---
+
+### 27. `React.memo` on `LyricLine` with ref-stabilised callbacks
+
+**Decision:** `LyricLine` is wrapped with `React.memo`. To make memo effective, `LyricsList` uses `useCallback` for `handleSelect` and `handleDoubleClick`, with mutable refs (`focusedLineIdRef`, `segmentsRef`, `seekToRef`) for values that change frequently. This keeps the callback identity stable while always reading the latest value.
+
+**Why the ref pattern:** The naive approach — `useCallback(fn, [state.focusedLineId, state.segments])` — would recreate the callbacks on every state change, invalidating memo on every render anyway. Refs break that cycle: the callback deps are `[dispatch]` (stable) and `[]` respectively, but the functions always read current data.
+
+**What this prevents:** Without memo, all 28+ `LyricLine` rows re-render on every `timeupdate` tick (4×/second). With memo and stable callbacks, only the line whose `isActive`, `isFocused`, or `isSelected` prop actually changed re-renders.
+
+---
+
+### 28. Double-click on a timed line seeks to its start time
+
+**Decision:** Double-clicking a `LyricLine` that has a segment calls `seekTo(segment.start_ms)`, jumping the playhead to that line's start.
+
+**Guessed:** The brief specifies "clicking a timed line in the list seeks to its `start_ms`" — but a plain click is already used for selection. Double-click is the natural disambiguation: single click selects, double click seeks. This avoids conflicting intent on the same gesture.
+
+---
+
 _This file is updated as each significant decision is made during implementation._
