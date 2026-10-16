@@ -183,4 +183,54 @@ Consumers import from the folder, not the file: `import { LyricLine } from '../c
 
 ---
 
+---
+
+## Phase 0 implementation decisions
+
+### 15. Arrow functions as the standard over regular function declarations
+
+**Decision:** All functions — utilities, hooks, reducers, and React components — are written as `const name = () => {}` arrow functions. No `function` keyword anywhere in the codebase.
+
+**Why:** Consistency. A single style across the codebase means no mental switching. Arrow functions also make the implicit return form available for short pure functions (`const toMs = (s: number) => Math.round(s * 1000)`), which reads cleanly.
+
+**One exception noted:** `switch` inside an arrow function works identically to inside a regular function — no behaviour difference for the reducer.
+
+---
+
+### 16. `LINE_STAMPED` automatically closes the previous line's end time
+
+**Decision:** When line N is stamped at time T, the reducer also sets line N-1's `end_ms` to T (if line N-1 has a segment).
+
+**Why:** Without this, every line's end would be a fixed offset from its start — meaning gaps and overlaps would be the norm. Closing the previous line at the exact moment the next line begins is the correct model for back-to-back lyrics. It makes a first-pass stamp session produce tight, non-overlapping segments automatically.
+
+**Guessed:** The brief does not specify this behaviour. It is inferred from how lyric timing tools conventionally work.
+
+---
+
+### 17. `STAMP_DEFAULT_DURATION_MS = 5_000` as the fallback end time
+
+**Decision:** When stamping a line that has no subsequent timed line to borrow an end boundary from, `end_ms` is set to `min(start_ms + 5000, durationMs)`.
+
+**Why:** A segment must have `end_ms > start_ms` (server requirement). Five seconds is a reasonable default for a lyric line — long enough to not clip, short enough not to overlap the next line badly. The user can always nudge it afterward.
+
+**Guessed:** The brief does not specify a default duration. Five seconds is an editorial guess. If the real track has shorter lines on average, this could be changed to 3000ms.
+
+---
+
+### 18. `TimeContext` uses `useState` not `useReducer`
+
+**Decision:** `TimeContext` holds a single value (`currentTimeMs`) updated via `setCurrentTimeMs`. No action types, no reducer.
+
+**Why:** There is exactly one operation: "set the current time to this ms value." That is `useState`. Using `useReducer` here would add a `TIME_UPDATED` action type and a one-case reducer with no benefit. The split between `EditorContext` (reducer) and `TimeContext` (state) is deliberate — the reducer handles complex transitions, the time context handles a single high-frequency scalar.
+
+---
+
+### 19. Context initialised with `null`, hook throws on missing provider
+
+**Decision:** Both `EditorContext` and `TimeContext` are created with `createContext<T | null>(null)`. Their respective hooks (`useEditor`, `useTime`) throw an error if the context value is `null`.
+
+**Why:** The alternative — providing a default value — silently hides the bug of using a hook outside its provider. A thrown error with a clear message ("useEditor must be used inside EditorProvider") surfaces the mistake immediately at the point of misuse. The `| null` type forces the null check in the hook, which TypeScript verifies.
+
+---
+
 _This file is updated as each significant decision is made during implementation._
