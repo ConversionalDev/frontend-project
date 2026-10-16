@@ -40,6 +40,19 @@ export type TrackLoadedPayload = {
   isCustomTrack: boolean;
 };
 
+type ApiSegment = { line_id: string; start_ms: number; end_ms: number };
+
+export type ApiTrack = {
+  id: string;
+  title: string;
+  artist: string;
+  duration_seconds: number;
+  audio_url: string;
+  lines: Line[];
+  version: number;
+  alignment: { segments: ApiSegment[] } | null;
+};
+
 export type EditorAction =
   | { type: 'TRACK_LOADED'; payload: TrackLoadedPayload }
   | { type: 'LINE_STAMPED'; payload: { lineId: string; startMs: number } }

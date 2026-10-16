@@ -5,4 +5,5 @@ export type {
   EditorState,
   TrackLoadedPayload,
   EditorAction,
+  ApiTrack,
 } from './editor';

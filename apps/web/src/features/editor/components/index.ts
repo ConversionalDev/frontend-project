@@ -1,1 +1,2 @@
-// Components are added here as they are implemented
+export { CustomTrackForm } from './CustomTrackForm';
+export { WaveformDecor } from './WaveformDecor';
