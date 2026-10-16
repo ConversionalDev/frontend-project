@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { useTime } from '../context';
 import { toMs, toSeconds } from '../utils';
 
@@ -29,17 +29,17 @@ export const useAudio = () => {
     };
   }, [setCurrentTimeMs]);
 
-  const toggle = () => {
+  const toggle = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
     audio.paused ? void audio.play() : audio.pause();
-  };
+  }, []);
 
-  const seekTo = (ms: number) => {
+  const seekTo = useCallback((ms: number) => {
     const audio = audioRef.current;
     if (!audio) return;
     audio.currentTime = toSeconds(ms);
-  };
+  }, []);
 
   return { audioRef, isPlaying, toggle, seekTo };
 };
