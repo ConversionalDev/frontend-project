@@ -1,16 +1,12 @@
+@import "tailwindcss";
+
 /*
- * Boilerplate. Not a design, and not a hint about one.
+ * Design tokens from the original scaffold, kept as CSS custom properties so
+ * dark mode switching (via prefers-color-scheme) works automatically.
  *
- * This file exists so the starting page is not raw browser default: a font
- * stack, a colour scheme that follows the OS, and readable defaults for the
- * handful of elements the placeholder renders. Nothing in here is load-bearing
- * and nothing in here is graded. Rename it, replace it with Tailwind or CSS
- * modules or styled-components, or delete it and start from nothing — all four
- * are fine.
- *
- * Deliberately absent: layout. No grid, no panes, no component classes. How the
- * editor is arranged is one of the choices the exercise is asking you to make,
- * so the scaffold does not make it for you.
+ * Mapped into the Tailwind v4 theme via @theme inline below, so components
+ * can use utility classes like bg-surface, text-accent, border-border etc.
+ * without needing arbitrary value syntax.
  */
 
 :root {
@@ -51,6 +47,34 @@
     --accent-contrast: #10231a;
     --danger: #e08472;
   }
+}
+
+/*
+ * Maps the CSS custom properties above into Tailwind v4 theme tokens.
+ * Using `inline` means Tailwind references the CSS variables at runtime
+ * rather than inlining static values — so dark mode switching still works.
+ *
+ * Usage in components:
+ *   bg-surface       → background: var(--surface)
+ *   text-accent      → color: var(--accent)
+ *   border-border    → border-color: var(--border)
+ *   text-muted       → color: var(--text-muted)
+ *   bg-danger        → background: var(--danger)
+ */
+@theme inline {
+  --color-bg:             var(--bg);
+  --color-surface:        var(--surface);
+  --color-border:         var(--border);
+  --color-text:           var(--text);
+  --color-muted:          var(--text-muted);
+  --color-accent:         var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-danger:         var(--danger);
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
 }
 
 *,
