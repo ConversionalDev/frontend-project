@@ -1,1 +1,1 @@
-// Hooks are added here as they are implemented
+export { useAudio } from './useAudio';
