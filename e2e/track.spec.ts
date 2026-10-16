@@ -7,6 +7,6 @@ import { test, expect } from '@playwright/test';
 test('the app loads and shows the audio player', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Open track →' }).click();
-  await expect(page.getByText('You Verse You')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+  await expect(page.getByRole('listbox', { name: 'Lyrics' })).toBeVisible();
 });
