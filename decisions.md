@@ -233,4 +233,39 @@ Consumers import from the folder, not the file: `import { LyricLine } from '../c
 
 ---
 
+---
+
+## Phase 1 implementation decisions
+
+### 20. Single card with tab switcher for the load screen
+
+**Decision:** One card, two tabs ("Seeded track" / "Your own"). Not two side-by-side cards or a split layout.
+
+**Alternatives considered:**
+
+- Two cards side-by-side — creates unequal heights because the custom form (file picker + textarea) is taller than the seeded panel; looks broken at most viewport widths
+- Accordion / expandable sections — extra interaction cost for a two-option choice
+
+**Why this:** A tab switcher is the canonical pattern for mutually exclusive options within a single context. Both paths load a track — they are the same action with a different source. A single card reinforces that. The active tab gets `bg-accent text-accent-contrast` for clear visual state.
+
+---
+
+### 21. Global element styles wrapped in `@layer base`
+
+**Decision:** All element-level rules in `styles.css` (`button`, `input`, `body`, etc.) are placed inside `@layer base`.
+
+**Why:** Tailwind v4 generates its utility classes at the `utilities` layer. CSS cascade order is: `base` < `components` < `utilities`. Without `@layer base`, global rules like `button { background: var(--surface) }` sit outside any layer and cascade _after_ Tailwind utilities — meaning `bg-accent` on a button gets silently overridden by the global rule. Wrapping in `@layer base` puts those rules below utilities, so Tailwind classes always win.
+
+**What this affects:** Any component that uses `bg-accent`, `text-accent-contrast`, or similar on a `button` element. Without this fix, active tab styling and accent-coloured CTA buttons render with the wrong background.
+
+---
+
+### 22. Audio MIME type validated in JavaScript, not HTML alone
+
+**Decision:** `CustomTrackForm` checks `file.type.startsWith('audio/')` in the `onChange` handler and rejects the file immediately with an error message. The `accept="audio/*"` attribute is kept but treated as a UX hint only.
+
+**Why:** The `accept` attribute filters the file picker UI but is not enforced by the browser — a user can switch the filter to "All files" and select any file. The OS also sometimes reports video container formats (e.g. `.mp4` with an audio-only track) with a `video/*` MIME type even when the content is audio. Validating in JS catches both cases and gives an immediate, specific error rather than letting `getAudioDuration` fail with a generic rejection.
+
+---
+
 _This file is updated as each significant decision is made during implementation._
