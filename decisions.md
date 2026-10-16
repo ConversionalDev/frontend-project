@@ -124,6 +124,15 @@ Human decisions (the developer's own choices) are noted separately where they di
 
 ---
 
+### 8b. Folder structure: feature-based, barrel exports
+
+**Decision:** One feature folder (`features/editor/`) owns everything — load screen, editor screen, and all supporting code. Subfolders: `components/`, `hooks/`, `utils/`, `types/`, `context/`. Each subfolder has an `index.ts` barrel. Shared code lives in `shared/`.
+
+**Why barrel `index.ts` files:**
+Consumers import from the folder, not the file: `import { LyricLine } from '../components'`. If a file is renamed or split, only the barrel changes — not every consumer. Standard pattern for feature-based React projects.
+
+---
+
 ### 9. Line identification: always by `id` and `index`, never by `text`
 
 **Decision:** All internal lookups, segment mappings, and UI keys use `line.id`. Text is display-only.
