@@ -268,4 +268,39 @@ Consumers import from the folder, not the file: `import { LyricLine } from '../c
 
 ---
 
+---
+
+## Phase 2 implementation decisions
+
+### 23. `useAudio` owned by `EditorScreen`, not `AudioPlayer`
+
+**Decision:** `useAudio` is called in `EditorScreen`, which passes `{ audioRef, isPlaying, toggle, seekTo }` down as props to `AudioPlayer`.
+
+**Alternatives considered:**
+
+- Call `useAudio` inside `AudioPlayer` — simpler in isolation, but `seekTo` then lives inside the component and cannot be passed to `LyricsList` (Phase 3) without introducing a context or lifting state anyway
+- Put `seekTo` in a new context — adds a third context for what is effectively a one-function callback; prop drilling one level is simpler
+
+**Why this:** `EditorScreen` is the natural owner of audio controls — it coordinates the audio player, the lyrics list, and eventually the inspector. Having `seekTo` at that level means Phase 3's line-click-to-seek is a straightforward prop pass, not a refactor.
+
+---
+
+### 24. Seek bar drag buffering with local `seekValue` state
+
+**Decision:** `AudioPlayer` holds a `seekValue: number | null` state. While the user drags, `seekValue` overrides `currentTimeMs` as the displayed value. On `mouseup`/`touchend`, it resets to `null` and live time resumes.
+
+**Why:** Without this, `currentTimeMs` is updated by `timeupdate` events ~4×/second. During a drag, those updates would fight the user's thumb — the range input would jump back toward the playhead position on every tick, making seeking feel broken. The local buffer absorbs those updates while the user is in control.
+
+---
+
+### 25. `useKeyboard` placed in `shared/hooks` with configurable `ignoreElements`
+
+**Decision:** The keyboard binding hook lives in `shared/hooks/`, not in the editor feature. It accepts an `ignoreElements` string array (defaulting to `['INPUT', 'TEXTAREA', 'SELECT']`) instead of hardcoding the skip logic.
+
+**Why shared:** The hook has no editor-specific imports — it's a generic document-level keydown binder. Any future feature can use it.
+
+**Why `ignoreElements` array:** A boolean flag (`ignoreFormElements: true/false`) only covers two cases. An array lets callers pass exactly the tag names they care about — e.g. passing `[]` to capture keys everywhere, or adding `'BUTTON'` to skip focused buttons. The default covers the common case with no config needed.
+
+---
+
 _This file is updated as each significant decision is made during implementation._
