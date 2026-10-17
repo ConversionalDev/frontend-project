@@ -1,5 +1,33 @@
 import { toMs } from './time';
-import type { ApiTrack, EditorState, TrackLoadedPayload } from '../types';
+import type {
+  ApiTrack,
+  EditorState,
+  Segment,
+  StoredCustomTrack,
+  TrackLoadedPayload,
+} from '../types';
+
+export const CUSTOM_LS_KEY = (trackId: string) =>
+  `lyric-align-custom-${trackId}`;
+
+export const trackIdFor = (file: File) => `custom-${file.name}-${file.size}`;
+
+export const restoreCustomTrack = (
+  trackId: string,
+): StoredCustomTrack | null => {
+  try {
+    const raw = localStorage.getItem(CUSTOM_LS_KEY(trackId));
+    if (!raw) return null;
+    return JSON.parse(raw) as StoredCustomTrack;
+  } catch {
+    return null;
+  }
+};
+
+export const toSegmentsMap = (
+  alignment: { segments: Segment[] } | null | undefined,
+): Record<string, Segment> =>
+  Object.fromEntries((alignment?.segments ?? []).map((s) => [s.line_id, s]));
 
 export const apiTrackToPayload = (data: ApiTrack): TrackLoadedPayload => ({
   trackId: data.id,
@@ -8,9 +36,7 @@ export const apiTrackToPayload = (data: ApiTrack): TrackLoadedPayload => ({
   durationMs: toMs(data.duration_seconds),
   audioSrc: data.audio_url,
   lines: data.lines,
-  segments: Object.fromEntries(
-    (data.alignment?.segments ?? []).map((s) => [s.line_id, s]),
-  ),
+  segments: toSegmentsMap(data.alignment),
   version: data.version,
   isCustomTrack: false,
 });

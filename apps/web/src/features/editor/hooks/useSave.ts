@@ -1,21 +1,14 @@
 import { useCallback, useRef } from 'react';
 import { api, ApiError } from '../../../api';
 import { useEditor } from '../context';
+import { CUSTOM_LS_KEY, toSegmentsMap } from '../utils';
 import type { Line, Segment } from '../types';
 
-const CUSTOM_LS_KEY = (trackId: string) => `lyric-align-custom-${trackId}`;
-
-type ApiSegment = { line_id: string; start_ms: number; end_ms: number };
 type AlignmentResponse = {
   version: number;
   lines: Line[];
-  alignment: { segments: ApiSegment[] } | null;
+  alignment: { segments: Segment[] } | null;
 };
-
-const toSegmentsMap = (
-  alignment: AlignmentResponse['alignment'],
-): Record<string, Segment> =>
-  Object.fromEntries((alignment?.segments ?? []).map((s) => [s.line_id, s]));
 
 export const useSave = () => {
   const { state, dispatch } = useEditor();

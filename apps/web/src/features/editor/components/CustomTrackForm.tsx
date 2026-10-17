@@ -1,27 +1,12 @@
 import { useRef, useState } from 'react';
 import { ErrorMessage } from '../../../shared/components';
-import { parseLyrics, getAudioDuration } from '../utils';
-import type { Line, Segment, TrackLoadedPayload } from '../types';
-
-const CUSTOM_LS_KEY = (trackId: string) => `lyric-align-custom-${trackId}`;
-
-type StoredCustomTrack = {
-  version: number;
-  lines: Line[];
-  alignment: { segments: Segment[] } | null;
-};
-
-const restoreCustomTrack = (trackId: string): StoredCustomTrack | null => {
-  try {
-    const raw = localStorage.getItem(CUSTOM_LS_KEY(trackId));
-    if (!raw) return null;
-    return JSON.parse(raw) as StoredCustomTrack;
-  } catch {
-    return null;
-  }
-};
-
-const trackIdFor = (file: File) => `custom-${file.name}-${file.size}`;
+import {
+  parseLyrics,
+  getAudioDuration,
+  restoreCustomTrack,
+  trackIdFor,
+} from '../utils';
+import type { StoredCustomTrack, TrackLoadedPayload } from '../types';
 
 type Props = {
   onLoad: (payload: TrackLoadedPayload) => void;
@@ -30,7 +15,9 @@ type Props = {
 export const CustomTrackForm = ({ onLoad }: Props) => {
   const fileRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [savedSession, setSavedSession] = useState<StoredCustomTrack | null>(null);
+  const [savedSession, setSavedSession] = useState<StoredCustomTrack | null>(
+    null,
+  );
   const [lyricsText, setLyricsText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +76,10 @@ export const CustomTrackForm = ({ onLoad }: Props) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-4"
+    >
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium">Audio file</label>
         <input
@@ -114,8 +104,8 @@ export const CustomTrackForm = ({ onLoad }: Props) => {
       {savedSession ? (
         <p className="text-xs text-muted bg-bg border border-border rounded-md px-3 py-2.5">
           Previous session found — {savedSession.lines.length} lines,{' '}
-          {(savedSession.alignment?.segments ?? []).length} timed.
-          Lyrics will be restored automatically.
+          {(savedSession.alignment?.segments ?? []).length} timed. Lyrics will
+          be restored automatically.
         </p>
       ) : (
         <div className="flex flex-col gap-1.5">

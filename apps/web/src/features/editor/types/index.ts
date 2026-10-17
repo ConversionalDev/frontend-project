@@ -6,4 +6,5 @@ export type {
   TrackLoadedPayload,
   EditorAction,
   ApiTrack,
+  StoredCustomTrack,
 } from './editor';

@@ -53,6 +53,12 @@ export type ApiTrack = {
   alignment: { segments: ApiSegment[] } | null;
 };
 
+export type StoredCustomTrack = {
+  version: number;
+  lines: Line[];
+  alignment: { segments: Segment[] } | null;
+};
+
 export type EditorAction =
   | { type: 'TRACK_LOADED'; payload: TrackLoadedPayload }
   | { type: 'LINE_STAMPED'; payload: { lineId: string; startMs: number } }
