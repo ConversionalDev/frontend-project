@@ -355,4 +355,75 @@ Consumers import from the folder, not the file: `import { LyricLine } from '../c
 
 ---
 
+---
+
+## Phase 5 implementation decisions
+
+### 31. `useSave` hook: custom tracks to localStorage, seeded track to API
+
+**Decision:** `useSave` branches on `state.isCustomTrack`. For custom tracks, segments are serialised to `localStorage` under the key `lyric-align-custom-{trackId}`. For seeded tracks, a `PUT /api/v1/track/alignment` request is made with `{ version, lines, segments }`.
+
+**Alternatives considered:**
+
+- Save everything to `localStorage` only — avoids the API call and 409 handling, but the brief explicitly says handling save rejection is worth showing. localStorage for custom tracks is the right call because the API has no route for creating new tracks.
+- Save custom tracks to a different state mechanism — `localStorage` is the natural place for "offline" user-created data with no server representation.
+
+**Why this split:** The two track types have fundamentally different persistence strategies. The seeded track is authoritative on the server; custom tracks have nowhere to go on the server. The `isCustomTrack` flag captures this cleanly.
+
+---
+
+### 32. PUT body includes `lines` array
+
+**Decision:** The PUT request body sends `{ version, lines: state.lines, segments: Object.values(state.segments) }`. The `lines` array is included because the server's `parsePutBody` requires it.
+
+**Why:** The API's `validate.js` rejects requests without a `lines` array and also validates that each segment's `line_id` references a line in the same request. Omitting lines would produce a `400 invalid_lines` error. This is by design — the API supports updating the lyric sheet and timing in a single PUT.
+
+---
+
+### 33. 409 conflict: server state wins, client shows banner
+
+**Decision:** On a 409 response, the reducer's `SAVE_CONFLICTED` action replaces `lines`, `segments`, and `version` with the server's current state and sets `saveStatus: 'conflict'`. The `SaveBar` shows a persistent banner: "Conflict — server version loaded. Review and save again."
+
+**Alternatives considered:**
+
+- Show a modal with a diff view — significantly more complex; for a lyric editor the "diff" is just the list of lines, which the user can already see
+- Merge server state into local state — ambiguous resolution strategy when both have changed the same segment; server-wins is explicit
+
+**Why server-wins:** The server's state is the ground truth after a version conflict. The user already has the editor open with the server's current alignment visible; they can re-apply any local changes and save again. This is the simplest recoverable state with no ambiguity.
+
+---
+
+### 34. Cmd+S (and Ctrl+S) wired via `useKeyboard` with modifier check
+
+**Decision:** A `KeyS` handler is added to `useKeyboard` in `EditorScreen`. Inside the handler, `if (!e.metaKey && !e.ctrlKey) return` ensures it only fires on Cmd+S or Ctrl+S, not on bare `s` keystrokes. `e.preventDefault()` suppresses the browser's native save dialog.
+
+**Why `useKeyboard` rather than a separate `addEventListener`:** Keeps all keyboard bindings declared in one place. The modifier check inside the handler is simpler than extending `useKeyboard`'s API to handle composite keys.
+
+---
+
+---
+
+## Post-phase-5 structural decisions
+
+### 35. Screens moved into `features/editor/screens/` subfolder
+
+**Decision:** `EditorScreen` and `LoadScreen` were moved from the root of `features/editor/` into `features/editor/screens/`. A `screens/index.ts` barrel was added so `App.tsx` imports from `'./features/editor/screens'`.
+
+**Why:** Every other concern in the feature already had its own subfolder (`components/`, `hooks/`, `utils/`, `types/`, `context/`). Keeping two screen files at the root was inconsistent and made the folder harder to read. Moving them into `screens/` makes the boundary explicit and gives the subfolder a clear single responsibility.
+
+---
+
+### 36. Barrel `index.ts` = public API for external consumers only
+
+**Decision:** A firm rule across the feature: a subfolder's `index.ts` exports only what files *outside that subfolder* consume. Files inside the subfolder import each other directly.
+
+**Examples:**
+- `components/index.ts` exports `AudioPlayer`, `Inspector`, `LyricsList`, `SaveBar`, `CustomTrackForm`, `WaveformDecor` — what `screens/` needs. Internal sub-components (`NudgeRow`, `Section`, `SingleLinePanel`, `MultiLinePanel`) are not exported.
+- `screens/index.ts` exports `EditorScreen`, `LoadScreen` — what `App.tsx` needs.
+- `context/index.ts` and `types/index.ts` export what `App.tsx` needs (`EditorProvider`, `TimeProvider`, `EditorState`).
+
+**Why:** Treating the barrel as a published surface makes it easy to see what is safe to change without breaking callers. If an internal component is renamed or merged, only the files that directly import it change — no barrel update, no external impact.
+
+---
+
 _This file is updated as each significant decision is made during implementation._
