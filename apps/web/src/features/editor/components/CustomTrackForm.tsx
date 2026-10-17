@@ -21,6 +21,8 @@ const restoreCustomTrack = (trackId: string): StoredCustomTrack | null => {
   }
 };
 
+const trackIdFor = (file: File) => `custom-${file.name}-${file.size}`;
+
 type Props = {
   onLoad: (payload: TrackLoadedPayload) => void;
 };
@@ -28,6 +30,7 @@ type Props = {
 export const CustomTrackForm = ({ onLoad }: Props) => {
   const fileRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [savedSession, setSavedSession] = useState<StoredCustomTrack | null>(null);
   const [lyricsText, setLyricsText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +43,7 @@ export const CustomTrackForm = ({ onLoad }: Props) => {
       return;
     }
     setSelectedFile(file);
+    setSavedSession(file ? restoreCustomTrack(trackIdFor(file)) : null);
     setError(null);
   };
 
@@ -49,9 +53,7 @@ export const CustomTrackForm = ({ onLoad }: Props) => {
       setError('Select an audio file');
       return;
     }
-    const trackId = `custom-${selectedFile.name}-${selectedFile.size}`;
-    const hasSavedSession = restoreCustomTrack(trackId) !== null;
-    if (!hasSavedSession && !lyricsText.trim()) {
+    if (!savedSession && !lyricsText.trim()) {
       setError('Paste your lyrics');
       return;
     }
@@ -59,14 +61,14 @@ export const CustomTrackForm = ({ onLoad }: Props) => {
     setLoading(true);
     setError(null);
 
+    const trackId = trackIdFor(selectedFile);
     let audioSrc: string | null = null;
     try {
       audioSrc = URL.createObjectURL(selectedFile);
       const durationMs = await getAudioDuration(audioSrc);
-      const stored = restoreCustomTrack(trackId);
-      const lines = stored?.lines ?? parseLyrics(lyricsText);
+      const lines = savedSession?.lines ?? parseLyrics(lyricsText);
       const segments = Object.fromEntries(
-        (stored?.alignment?.segments ?? []).map((s) => [s.line_id, s]),
+        (savedSession?.alignment?.segments ?? []).map((s) => [s.line_id, s]),
       );
       onLoad({
         trackId,
@@ -76,7 +78,7 @@ export const CustomTrackForm = ({ onLoad }: Props) => {
         audioSrc,
         lines,
         segments,
-        version: stored?.version ?? 0,
+        version: savedSession?.version ?? 0,
         isCustomTrack: true,
       });
     } catch (err) {
@@ -87,10 +89,7 @@ export const CustomTrackForm = ({ onLoad }: Props) => {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex flex-col gap-4"
-    >
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium">Audio file</label>
         <input
@@ -112,16 +111,24 @@ export const CustomTrackForm = ({ onLoad }: Props) => {
         </label>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium">Lyrics</label>
-        <textarea
-          value={lyricsText}
-          onChange={(e) => setLyricsText(e.target.value)}
-          rows={9}
-          placeholder={'Paste lyrics here\nOne line per row'}
-          className="font-mono text-sm resize-none rounded-md border border-border bg-bg p-3 placeholder:text-muted focus:outline-none focus:border-accent"
-        />
-      </div>
+      {savedSession ? (
+        <p className="text-xs text-muted bg-bg border border-border rounded-md px-3 py-2.5">
+          Previous session found — {savedSession.lines.length} lines,{' '}
+          {(savedSession.alignment?.segments ?? []).length} timed.
+          Lyrics will be restored automatically.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium">Lyrics</label>
+          <textarea
+            value={lyricsText}
+            onChange={(e) => setLyricsText(e.target.value)}
+            rows={9}
+            placeholder={'Paste lyrics here\nOne line per row'}
+            className="font-mono text-sm resize-none rounded-md border border-border bg-bg p-3 placeholder:text-muted focus:outline-none focus:border-accent"
+          />
+        </div>
+      )}
 
       {error && <ErrorMessage message={error} />}
 
@@ -130,7 +137,7 @@ export const CustomTrackForm = ({ onLoad }: Props) => {
         disabled={loading}
         className="w-full py-2.5 rounded-md bg-accent text-accent-contrast font-medium text-sm border-transparent hover:opacity-90 disabled:opacity-50 transition-opacity"
       >
-        {loading ? 'Loading…' : 'Load track'}
+        {loading ? 'Loading…' : savedSession ? 'Restore session' : 'Load track'}
       </button>
     </form>
   );
