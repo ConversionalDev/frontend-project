@@ -553,4 +553,34 @@ Consumers import from the folder, not the file: `import { LyricLine } from '../c
 
 ---
 
+### 48. Session persistence via localStorage SESSION_KEY
+
+**Decision:** On load, `saveSession` writes `{ type: 'seeded' }` or `{ type: 'custom', trackId }` to a `lyric-align-session` key. On mount, `App.tsx` reads this and auto-restores: seeded sessions re-fetch from the API and go straight to the editor; custom sessions fall through to the load screen where the user re-selects their audio file and lyrics are restored from `CUSTOM_LS_KEY`.
+
+**Why not URL params:** Session state is mutable (the user stamps and saves over time), not derived from the URL. Encoding editor state in the URL would require serialising segments and updating the URL on every change — more complexity for no real benefit. localStorage is already in use for custom track data, so the session record is a natural addition.
+
+**Why custom sessions don't auto-restore to the editor:** The browser File API does not allow persisting a `File` object or its object URL across page loads. Restoring the editor directly would require re-reading the audio file, which demands a user gesture (file picker). The chosen trade-off: the load screen detects the saved session for that trackId and skips the lyrics step — the user only needs to re-select the audio file.
+
+---
+
+### 49. `beforeunload` guard registered once with a stable ref
+
+**Decision:** `EditorScreen` registers a single `beforeunload` listener on mount (empty deps array). Inside the handler, `hasUnsavedRef.current` is read rather than closing over `hasUnsaved` directly.
+
+**Why:** Registering the listener on every change to `hasUnsaved` (the naive approach) would add and remove the event listener on every stamp or save — unnecessary DOM work. The stable ref pattern keeps the listener registered once for the lifetime of the editor, while the handler always reads the freshest value.
+
+**Why `useMemo` for `hasUnsaved`:** `Object.keys(state.segments).length > 0 && state.saveStatus !== 'saved'` is cheap to compute but is used in two places (the ref sync and `handleBack`). Memoising it avoids recalculating twice per render and makes the dependency clear.
+
+---
+
+### 50. `persistCustomTrack` as a shared util, explicit save only
+
+**Decision:** All writes of the custom track shape `{ version, lines, alignment }` to localStorage go through a single `persistCustomTrack(trackId, data)` function in `utils/track.ts`. It is called in two places: `useSave` (on Cmd+S) and `CustomTrackForm` (initial save on first load). There is no auto-save on every segment change.
+
+**Why a shared util:** The write shape was duplicated between `useSave` and `CustomTrackForm`. A single function enforces one canonical shape and makes future changes (e.g. adding a field) a one-line edit.
+
+**Why no auto-save on every change:** Auto-saving on every stamp would write to localStorage on every keypress during a stamping session — high frequency, no benefit over saving on Cmd+S. The user explicitly controls when to save; the `beforeunload` guard covers the accidental-close case without requiring continuous writes.
+
+---
+
 _This file is updated as each significant decision is made during implementation._
