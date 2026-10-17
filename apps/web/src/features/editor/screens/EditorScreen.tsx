@@ -1,13 +1,14 @@
 import { useMemo } from 'react';
-import { useEditor } from './context';
-import { useAudio } from './hooks';
-import { AudioPlayer, Inspector, LyricsList } from './components';
-import { useKeyboard } from '../../shared/hooks';
-import { toMs } from './utils';
+import { useEditor } from '../context';
+import { useAudio, useSave } from '../hooks';
+import { AudioPlayer, Inspector, LyricsList, SaveBar } from '../components';
+import { useKeyboard } from '../../../shared/hooks';
+import { toMs } from '../utils';
 
 export const EditorScreen = () => {
   const { state, dispatch } = useEditor();
   const { audioRef, isPlaying, toggle, seekTo } = useAudio();
+  const { save } = useSave();
 
   const sorted = useMemo(
     () => [...state.lines].sort((a, b) => a.index - b.index),
@@ -18,7 +19,10 @@ export const EditorScreen = () => {
     const idx = sorted.findIndex((l) => l.id === state.focusedLineId);
     const next = sorted[idx + direction];
     if (next)
-      dispatch({ type: 'LINE_SELECTED', payload: { lineId: next.id, additive: false } });
+      dispatch({
+        type: 'LINE_SELECTED',
+        payload: { lineId: next.id, additive: false },
+      });
   };
 
   useKeyboard({
@@ -30,7 +34,10 @@ export const EditorScreen = () => {
       if (!state.focusedLineId || !audioRef.current) return;
       dispatch({
         type: 'LINE_STAMPED',
-        payload: { lineId: state.focusedLineId, startMs: toMs(audioRef.current.currentTime) },
+        payload: {
+          lineId: state.focusedLineId,
+          startMs: toMs(audioRef.current.currentTime),
+        },
       });
     },
     ArrowDown: (e) => {
@@ -40,6 +47,11 @@ export const EditorScreen = () => {
     ArrowUp: (e) => {
       e.preventDefault();
       moveFocus(-1);
+    },
+    KeyS: (e) => {
+      if (!e.metaKey && !e.ctrlKey) return;
+      e.preventDefault();
+      void save();
     },
   });
 
@@ -51,6 +63,7 @@ export const EditorScreen = () => {
         toggle={toggle}
         seekTo={seekTo}
       />
+      <SaveBar />
 
       <div className="flex-1 flex overflow-hidden">
         <LyricsList seekTo={seekTo} />

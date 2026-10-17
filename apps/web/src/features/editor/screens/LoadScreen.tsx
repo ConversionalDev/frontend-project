@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { api, ApiError } from '../../api';
-import { ErrorMessage } from '../../shared/components';
-import { CustomTrackForm, WaveformDecor } from './components';
-import { apiTrackToPayload, payloadToInitialState } from './utils';
-import type { ApiTrack, EditorState, TrackLoadedPayload } from './types';
+import { api, ApiError } from '../../../api';
+import { ErrorMessage } from '../../../shared/components';
+import { CustomTrackForm, WaveformDecor } from '../components';
+import { apiTrackToPayload, payloadToInitialState } from '../utils';
+import type { ApiTrack, EditorState, TrackLoadedPayload } from '../types';
 
 type Tab = 'seeded' | 'custom';
 

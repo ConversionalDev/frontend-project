@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { EditorProvider, TimeProvider } from './features/editor/context';
-import { LoadScreen } from './features/editor/LoadScreen';
-import { EditorScreen } from './features/editor/EditorScreen';
+import { LoadScreen, EditorScreen } from './features/editor/screens';
 import type { EditorState } from './features/editor/types';
 
 const App = () => {
