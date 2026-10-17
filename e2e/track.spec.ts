@@ -14,6 +14,13 @@ test('pressing Enter stamps the focused line with a timecode', async ({
   await page.getByRole('button', { name: 'Open track →' }).click();
   await expect(page.getByRole('listbox', { name: 'Lyrics' })).toBeVisible();
 
+  // Wait for the audio element to have at least metadata (readyState >= 1)
+  // so the readyState guard in the stamp handler does not silently skip the keypress.
+  await page.waitForFunction(() => {
+    const audio = document.querySelector('audio');
+    return audio !== null && audio.readyState >= 1;
+  });
+
   // The first line is focused by default. Audio is at t=0 (not yet played),
   // so the stamp lands at 0ms. No button is focused, so Enter reaches our handler.
   await page.keyboard.press('Enter');
