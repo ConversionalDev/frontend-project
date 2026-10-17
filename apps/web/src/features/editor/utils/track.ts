@@ -10,6 +10,30 @@ import type {
 export const CUSTOM_LS_KEY = (trackId: string) =>
   `lyric-align-custom-${trackId}`;
 
+export const SESSION_KEY = 'lyric-align-session';
+type SessionRecord = { type: 'seeded' } | { type: 'custom'; trackId: string };
+
+export const saveSession = (state: EditorState) =>
+  localStorage.setItem(
+    SESSION_KEY,
+    JSON.stringify(
+      state.isCustomTrack
+        ? ({ type: 'custom', trackId: state.trackId } satisfies SessionRecord)
+        : ({ type: 'seeded' } satisfies SessionRecord),
+    ),
+  );
+
+export const clearSession = () => localStorage.removeItem(SESSION_KEY);
+
+export const readSession = (): SessionRecord | null => {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    return raw ? (JSON.parse(raw) as SessionRecord) : null;
+  } catch {
+    return null;
+  }
+};
+
 export const trackIdFor = (file: File) => `custom-${file.name}-${file.size}`;
 
 export const restoreCustomTrack = (
@@ -22,6 +46,13 @@ export const restoreCustomTrack = (
   } catch {
     return null;
   }
+};
+
+export const persistCustomTrack = (
+  trackId: string,
+  data: StoredCustomTrack,
+) => {
+  localStorage.setItem(CUSTOM_LS_KEY(trackId), JSON.stringify(data));
 };
 
 export const toSegmentsMap = (

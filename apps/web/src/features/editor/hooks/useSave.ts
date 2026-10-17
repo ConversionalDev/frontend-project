@@ -1,7 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { api, ApiError } from '../../../api';
 import { useEditor } from '../context';
-import { CUSTOM_LS_KEY, toSegmentsMap } from '../utils';
+import { persistCustomTrack, toSegmentsMap } from '../utils';
 import type { Line, Segment } from '../types';
 
 type AlignmentResponse = {
@@ -23,14 +23,11 @@ export const useSave = () => {
 
     if (s.isCustomTrack) {
       const nextVersion = s.version + 1;
-      localStorage.setItem(
-        CUSTOM_LS_KEY(s.trackId),
-        JSON.stringify({
-          version: nextVersion,
-          lines: s.lines,
-          alignment: { segments: Object.values(s.segments) },
-        }),
-      );
+      persistCustomTrack(s.trackId, {
+        version: nextVersion,
+        lines: s.lines,
+        alignment: { segments: Object.values(s.segments) },
+      });
       dispatch({ type: 'SAVE_SUCCEEDED', payload: { version: nextVersion } });
       return;
     }

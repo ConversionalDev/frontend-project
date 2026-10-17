@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import { useEditor } from '../context';
 import { useAudio, useSave } from '../hooks';
 import {
@@ -18,9 +18,24 @@ export const EditorScreen = ({ onBack }: Props) => {
   const { audioRef, isPlaying, toggle, seekTo } = useAudio();
   const { save } = useSave();
 
+  const hasUnsaved = useMemo(
+    () =>
+      Object.keys(state.segments).length > 0 && state.saveStatus !== 'saved',
+    [state.segments, state.saveStatus],
+  );
+  const hasUnsavedRef = useRef(hasUnsaved);
+  hasUnsavedRef.current = hasUnsaved;
+
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!hasUnsavedRef.current) return;
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, []);
+
   const handleBack = () => {
-    const hasUnsaved =
-      Object.keys(state.segments).length > 0 && state.saveStatus !== 'saved';
     if (
       hasUnsaved &&
       !window.confirm('You have unsaved changes. Leave anyway?')
