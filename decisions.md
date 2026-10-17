@@ -523,7 +523,7 @@ Consumers import from the folder, not the file: `import { LyricLine } from '../c
 
 **Decision:** A `?` button at the right of the audio player header opens a modal listing all keyboard shortcuts. Clicking the backdrop or `×` closes it.
 
-**Why:** Six non-obvious shortcuts (Space, Enter, arrows, Shift+click, double-click, Cmd+S) are enough to warrant a discoverable reference. A modal keeps it out of the way until needed. The `KeyboardGuide` component is internal to `AudioPlayer` and not exported from the barrel.
+**Why:** Five non-obvious shortcuts (Space, Enter, arrows, Shift+click, Cmd+S) are enough to warrant a discoverable reference, plus a note that clicking a timed line seeks to it. A modal keeps it out of the way until needed. The `KeyboardGuide` component is internal to `AudioPlayer` and not exported from the barrel.
 
 ---
 
@@ -580,6 +580,24 @@ Consumers import from the folder, not the file: `import { LyricLine } from '../c
 **Why a shared util:** The write shape was duplicated between `useSave` and `CustomTrackForm`. A single function enforces one canonical shape and makes future changes (e.g. adding a field) a one-line edit.
 
 **Why no auto-save on every change:** Auto-saving on every stamp would write to localStorage on every keypress during a stamping session — high frequency, no benefit over saving on Cmd+S. The user explicitly controls when to save; the `beforeunload` guard covers the accidental-close case without requiring continuous writes.
+
+---
+
+### 51. Single-click on a timed line seeks to its start time
+
+**Decision:** Clicking a lyric row dispatches `LINE_SELECTED` and, if the line has a segment, immediately calls `seekTo(seg.start_ms)`. Double-click still works but is now redundant; the keyboard guide was updated to say "Click — Select line and seek to its start time."
+
+**Why:** The assessment brief explicitly calls out "Hearing what you just placed, immediately, beats guessing and checking." A double-click-only seek forces the user to remember a hidden gesture; making seek happen on every non-shift click is the natural expectation and removes the need to know about double-click at all.
+
+**Why keep double-click:** No reason to actively remove it — it does no harm and the extra seek is imperceptible.
+
+---
+
+### 52. Bulk nudge clamps to track boundary instead of silently skipping
+
+**Decision:** When `SEGMENTS_NUDGED` computes a new position that would push a segment past the start or end of the track, it pins the segment to that boundary while preserving its original duration, rather than skipping the segment entirely.
+
+**Why:** A silent skip means the user presses a nudge button and nothing happens for some lines — no feedback, no indication of why. Clamping to the boundary means every timed line always moves as far as it can, which is the expected behaviour in any timeline editor. Lines that are already flush with the boundary simply stay put, which is self-evident.
 
 ---
 
