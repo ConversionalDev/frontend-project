@@ -102,11 +102,20 @@ export const CustomTrackForm = ({ onLoad }: Props) => {
       </div>
 
       {savedSession ? (
-        <p className="text-xs text-muted bg-bg border border-border rounded-md px-3 py-2.5">
-          Previous session found — {savedSession.lines.length} lines,{' '}
-          {(savedSession.alignment?.segments ?? []).length} timed. Lyrics will
-          be restored automatically.
-        </p>
+        <div className="flex flex-col gap-2">
+          <p className="text-xs text-muted bg-bg border border-border rounded-md px-3 py-2.5">
+            Previous session found — {savedSession.lines.length} lines,{' '}
+            {(savedSession.alignment?.segments ?? []).length} timed. Lyrics will
+            be restored automatically.
+          </p>
+          <button
+            type="button"
+            onClick={() => setSavedSession(null)}
+            className="self-start text-xs text-muted underline underline-offset-2 hover:text-text transition-colors"
+          >
+            Paste different lyrics instead
+          </button>
+        </div>
       ) : (
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium">Lyrics</label>
