@@ -73,9 +73,10 @@ export const SingleLinePanel = ({
       </Section>
 
       <button
-        onClick={() =>
-          dispatch({ type: 'SEGMENT_DELETED', payload: { lineId } })
-        }
+        onClick={() => {
+          if (!window.confirm('Delete timing for this line?')) return;
+          dispatch({ type: 'SEGMENT_DELETED', payload: { lineId } });
+        }}
         className="w-full mt-2 py-1.5 text-xs text-danger border-danger hover:opacity-80"
       >
         Delete timing

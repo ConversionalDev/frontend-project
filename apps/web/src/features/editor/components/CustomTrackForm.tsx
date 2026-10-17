@@ -5,6 +5,7 @@ import {
   getAudioDuration,
   restoreCustomTrack,
   trackIdFor,
+  CUSTOM_LS_KEY,
 } from '../utils';
 import type { StoredCustomTrack, TrackLoadedPayload } from '../types';
 
@@ -57,6 +58,14 @@ export const CustomTrackForm = ({ onLoad }: Props) => {
       const segments = Object.fromEntries(
         (savedSession?.alignment?.segments ?? []).map((s) => [s.line_id, s]),
       );
+
+      if (!savedSession) {
+        localStorage.setItem(
+          CUSTOM_LS_KEY(trackId),
+          JSON.stringify({ version: 0, lines, alignment: { segments: [] } }),
+        );
+      }
+
       onLoad({
         trackId,
         title: selectedFile.name.replace(/\.[^.]+$/, ''),
