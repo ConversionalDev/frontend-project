@@ -27,19 +27,25 @@ export const LyricLine = memo(({
       ? 'bg-surface'
       : 'hover:bg-surface';
 
+  const leftBorder = isSelected && !isActive
+    ? 'border-l-2 border-accent'
+    : 'border-l-2 border-transparent';
+
   return (
     <div
       role="option"
       aria-selected={isSelected}
       onClick={(e) => onSelect(line.id, e)}
       onDoubleClick={() => onDoubleClick(line.id)}
-      className={`flex items-center gap-3 px-4 py-2 rounded-md cursor-pointer select-none transition-colors ${bg} ${isFocused ? 'ring-1 ring-accent ring-inset' : ''}`}
+      className={`flex items-center gap-3 px-4 py-2 rounded-md cursor-pointer select-none transition-colors ${bg} ${leftBorder} ${isFocused ? 'ring-1 ring-accent ring-inset' : ''}`}
     >
       <span className="text-xs font-mono text-muted w-6 shrink-0 text-right">
         {line.index + 1}
       </span>
 
-      <span className={`flex-1 text-sm ${isActive ? 'text-accent font-medium' : ''}`}>
+      <span className={`flex-1 text-sm truncate ${
+        isActive ? 'text-accent font-medium' : !segment ? 'text-muted' : ''
+      }`}>
         {line.text}
       </span>
 
@@ -48,7 +54,7 @@ export const LyricLine = memo(({
           {formatTimecode(segment.start_ms)}
         </span>
       ) : (
-        <span className="text-xs text-muted shrink-0 opacity-40">untimed</span>
+        <span className="text-xs text-muted shrink-0 opacity-30">–</span>
       )}
     </div>
   );

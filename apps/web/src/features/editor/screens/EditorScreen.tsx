@@ -31,35 +31,38 @@ export const EditorScreen = () => {
       });
   };
 
-  useKeyboard({
-    Space: (e) => {
-      e.preventDefault();
-      toggle();
+  useKeyboard(
+    {
+      Space: (e) => {
+        e.preventDefault();
+        toggle();
+      },
+      Enter: () => {
+        if (!state.focusedLineId || !audioRef.current) return;
+        dispatch({
+          type: 'LINE_STAMPED',
+          payload: {
+            lineId: state.focusedLineId,
+            startMs: toMs(audioRef.current.currentTime),
+          },
+        });
+      },
+      ArrowDown: (e) => {
+        e.preventDefault();
+        moveFocus(1);
+      },
+      ArrowUp: (e) => {
+        e.preventDefault();
+        moveFocus(-1);
+      },
+      KeyS: (e) => {
+        if (!e.metaKey && !e.ctrlKey) return;
+        e.preventDefault();
+        void save();
+      },
     },
-    Enter: () => {
-      if (!state.focusedLineId || !audioRef.current) return;
-      dispatch({
-        type: 'LINE_STAMPED',
-        payload: {
-          lineId: state.focusedLineId,
-          startMs: toMs(audioRef.current.currentTime),
-        },
-      });
-    },
-    ArrowDown: (e) => {
-      e.preventDefault();
-      moveFocus(1);
-    },
-    ArrowUp: (e) => {
-      e.preventDefault();
-      moveFocus(-1);
-    },
-    KeyS: (e) => {
-      if (!e.metaKey && !e.ctrlKey) return;
-      e.preventDefault();
-      void save();
-    },
-  });
+    { ignoreElements: ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'] },
+  );
 
   return (
     <div className="flex flex-col h-screen bg-bg">

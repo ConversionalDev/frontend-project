@@ -68,7 +68,8 @@ export const LyricsList = ({ seekTo }: Props) => {
       role="listbox"
       aria-label="Lyrics"
       aria-multiselectable="true"
-      className="flex-1 overflow-y-auto py-2 px-2"
+      tabIndex={0}
+      className="flex-1 overflow-y-auto py-2 px-2 outline-none"
     >
       {sorted.map((line) => (
         <div
