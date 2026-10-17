@@ -445,4 +445,32 @@ Consumers import from the folder, not the file: `import { LyricLine } from '../c
 
 ---
 
+---
+
+## Phase 7 implementation decisions
+
+### 38. `BUTTON` added to `useKeyboard` ignoreElements in EditorScreen
+
+**Decision:** The editor's `useKeyboard` call passes `ignoreElements: ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON']`. The default only covers form inputs.
+
+**Why:** When a button (Save, Play, nudge) has browser focus and the user presses Space, two things happen: the browser clicks the button AND our `Space` handler fires `toggle()`. This double-action is a bug — play/pause fires when the user intended only to click the button. Adding `BUTTON` to the ignore list prevents our handlers from firing when a button is focused, letting the browser handle it normally.
+
+---
+
+### 39. Untimed lines shown with muted text and a dim dash badge
+
+**Decision:** Lines without a segment render their text in `text-muted` and show a dim `–` in place of a timecode badge. Previously the text was the same color as timed lines and the badge read "untimed" in full.
+
+**Why:** At a glance, the user needs to know which lines still need timing. Muting the text makes the distinction immediate without reading a label. The dash is less visually noisy than the word "untimed" while still occupying the badge slot so the layout stays stable.
+
+---
+
+### 40. Selected lines indicated with a left accent border
+
+**Decision:** Selected lines get `border-l-2 border-accent`. The background stays `bg-surface` (same as hover). The focused line additionally gets `ring-1 ring-accent ring-inset`.
+
+**Why:** The original `bg-surface` selected state was identical to the hover state, making selection invisible once the mouse moved away. A persistent left border is a common list-selection pattern (VS Code file tree, Notion sidebar) and works alongside the focus ring without visual conflict.
+
+---
+
 _This file is updated as each significant decision is made during implementation._
