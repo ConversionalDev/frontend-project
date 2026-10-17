@@ -1,11 +1,31 @@
 import { test, expect } from '@playwright/test';
 
-/**
- * There is deliberately one test. Its job is to prove the harness works - dev
- * servers up, proxy wired, token accepted, React rendering - and nothing about
- * how the UI should behave. That part is yours.
- */
-test('the app loads and shows the track title', async ({ page }) => {
+test('the app loads and shows the audio player', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'You Verse You' })).toBeVisible();
+  await page.getByRole('button', { name: 'Open track →' }).click();
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+  await expect(page.getByRole('listbox', { name: 'Lyrics' })).toBeVisible();
+});
+
+test('pressing Enter stamps the focused line with a timecode', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open track →' }).click();
+  await expect(page.getByRole('listbox', { name: 'Lyrics' })).toBeVisible();
+
+  // Wait for the audio element to have at least metadata (readyState >= 1)
+  // so the readyState guard in the stamp handler does not silently skip the keypress.
+  await page.waitForFunction(() => {
+    const audio = document.querySelector('audio');
+    return audio !== null && audio.readyState >= 1;
+  });
+
+  // The first line is focused by default. Audio is at t=0 (not yet played),
+  // so the stamp lands at 0ms. No button is focused, so Enter reaches our handler.
+  await page.keyboard.press('Enter');
+
+  // The first lyric row should now show a timecode badge (00:00.xx)
+  // instead of the untimed dash.
+  await expect(page.getByRole('option').first()).toContainText('00:00');
 });

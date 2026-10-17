@@ -1,39 +1,66 @@
-import { useEffect, useState } from 'react';
-import { api, ApiError } from './api';
+import { useState, useEffect } from 'react';
+import { api } from './api';
+import { EditorProvider, TimeProvider } from './features/editor/context';
+import { LoadScreen, EditorScreen } from './features/editor/screens';
+import {
+  apiTrackToPayload,
+  payloadToInitialState,
+  saveSession,
+  clearSession,
+  readSession,
+} from './features/editor/utils';
+import type { ApiTrack, EditorState } from './features/editor/types';
 
-/**
- * Deliberately partial. These are the only fields this placeholder reads; the
- * payload has a good deal more in it. Type the rest as you need it.
- */
-type Track = {
-  title: string;
-  audio_url: string;
-  lines: unknown[];
-};
-
-export default function App() {
-  const [track, setTrack] = useState<Track | null>(null);
-  const [error, setError] = useState<string | null>(null);
+const App = () => {
+  const [editorState, setEditorState] = useState<EditorState | null>(null);
+  const [restoring, setRestoring] = useState(
+    () => readSession()?.type === 'seeded',
+  );
 
   useEffect(() => {
-    let live = true;
-    api<Track>('/api/v1/track')
-      .then((t) => { if (live) setTrack(t); })
-      .catch((e: unknown) => {
-        if (!live) return;
-        setError(e instanceof ApiError ? `${e.message} ${JSON.stringify(e.body)}` : String(e));
-      });
-    return () => { live = false; };
+    if (readSession()?.type !== 'seeded') return;
+    const restore = async () => {
+      try {
+        const data = await api<ApiTrack>('/api/v1/track');
+        setEditorState(payloadToInitialState(apiTrackToPayload(data)));
+      } catch {
+        clearSession();
+      } finally {
+        setRestoring(false);
+      }
+    };
+    void restore();
   }, []);
 
-  if (error) return <p>{error}</p>;
-  if (!track) return <p>Loading…</p>;
+  const handleLoad = (state: EditorState) => {
+    saveSession(state);
+    setEditorState(state);
+  };
+
+  const handleBack = () => {
+    clearSession();
+    setEditorState(null);
+  };
+
+  if (restoring) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-bg text-muted text-sm">
+        Restoring session…
+      </div>
+    );
+  }
+
+  if (!editorState) {
+    return <LoadScreen onLoad={handleLoad} />;
+  }
 
   return (
-    <>
-      <h1>{track.title}</h1>
-      <p>{track.lines.length} lines</p>
-      <audio controls src={track.audio_url} />
-    </>
+    <EditorProvider initialState={editorState}>
+      <TimeProvider>
+        <EditorScreen onBack={handleBack} />
+      </TimeProvider>
+    </EditorProvider>
   );
-}
+};
+
+export default App;
