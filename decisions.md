@@ -426,4 +426,23 @@ Consumers import from the folder, not the file: `import { LyricLine } from '../c
 
 ---
 
+---
+
+## Phase 6 implementation decisions
+
+### 37. KaraokeBar never goes blank — last played line stays visible in gaps
+
+**Decision:** When no segment contains the current playhead position, `KaraokeBar` shows the most recently finished line (dimmed, as "current") and the next upcoming timed line (dimmed, as "next cue"). It only goes blank before any line has played and after all lines have ended.
+
+**Alternatives considered:**
+
+- Show nothing during gaps — honest but jarring; the bar collapses visually every time there is a pause between lines
+- Show the next line by index regardless of timing — misleading when lines are skipped (untimed lines between two timed ones would appear as cues they never become active)
+
+**Why this:** Spotify and Gaana both keep the last played line visible during gaps and instrumentals rather than blanking out. It gives the user a continuous sense of position in the song. For skipped/untimed lines, the lookup is on segments (not line order), so untimed lines in the middle are naturally ignored — the next *timed* line appears as the cue.
+
+**`isActive` flag:** The center line renders in `text-accent` when a segment is actively playing, and `text-muted` when in a gap. This distinguishes "this line is playing now" from "this is the last thing that played."
+
+---
+
 _This file is updated as each significant decision is made during implementation._
