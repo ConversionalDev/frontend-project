@@ -473,4 +473,20 @@ Consumers import from the folder, not the file: `import { LyricLine } from '../c
 
 ---
 
+---
+
+## Phase 8 implementation decisions
+
+### 41. Stamp test: Enter at t=0, assert timecode badge appears
+
+**Decision:** The Playwright test loads the seeded track, presses Enter without starting playback, and asserts the first lyric row shows `00:00`.
+
+**Why Enter at t=0:** Stamping without playing is a valid and reproducible state — the audio element starts at 0ms and the stamp reads `audioRef.current.currentTime` directly. No `play()` call is needed, no timing race with `timeupdate`. The test is deterministic.
+
+**Why assert `00:00`:** `formatTimecode(0)` produces `"00:00.00"`. Matching the substring `'00:00'` is sufficient and avoids coupling the test to the centisecond format.
+
+**What this test covers:** The full stamp path — keyboard handler fires, reducer runs `LINE_STAMPED`, React re-renders `LyricLine` with a segment, the timecode badge replaces the untimed dash. One assertion, one real interaction, no mocks.
+
+---
+
 _This file is updated as each significant decision is made during implementation._
