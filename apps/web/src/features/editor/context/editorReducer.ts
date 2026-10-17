@@ -100,9 +100,20 @@ export const reducer = (
       for (const lineId of lineIds) {
         const seg = newSegments[lineId];
         if (!seg) continue;
-        const newStart = Math.max(0, seg.start_ms + deltaMs);
-        const newEnd = Math.min(state.durationMs, seg.end_ms + deltaMs);
-        if (newEnd <= newStart) continue;
+        const duration = seg.end_ms - seg.start_ms;
+        let newStart = Math.max(0, seg.start_ms + deltaMs);
+        let newEnd = Math.min(state.durationMs, seg.end_ms + deltaMs);
+        // If boundary clamping squashed the segment, pin to the boundary
+        // while preserving its original duration
+        if (newEnd - newStart < duration) {
+          if (deltaMs < 0) {
+            newStart = 0;
+            newEnd = Math.min(duration, state.durationMs);
+          } else {
+            newEnd = state.durationMs;
+            newStart = Math.max(0, state.durationMs - duration);
+          }
+        }
         newSegments[lineId] = { ...seg, start_ms: newStart, end_ms: newEnd };
       }
 

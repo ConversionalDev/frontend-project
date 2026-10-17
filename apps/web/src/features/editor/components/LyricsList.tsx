@@ -53,6 +53,8 @@ export const LyricsList = ({ seekTo }: Props) => {
           type: 'LINE_SELECTED',
           payload: { lineId, additive: e.metaKey || e.ctrlKey },
         });
+        const seg = segmentsRef.current[lineId];
+        if (seg) seekToRef.current(seg.start_ms);
       }
     },
     [dispatch],
