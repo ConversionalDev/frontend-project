@@ -7,7 +7,7 @@ const SHORTCUTS = [
   { keys: ['↑', '↓'], description: 'Move focus up / down' },
   { keys: ['Shift', 'Click'], description: 'Select a range of lines' },
   { keys: ['⌘S', 'Ctrl+S'], description: 'Save' },
-  { keys: ['Double-click'], description: 'Seek to line start time' },
+  { keys: ['Click'], description: 'Select line and seek to its start time' },
 ] as const;
 
 const Key = ({ label }: { label: string }) => (
