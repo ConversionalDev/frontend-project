@@ -11,10 +11,23 @@ import {
 import { useKeyboard } from '../../../shared/hooks';
 import { toMs } from '../utils';
 
-export const EditorScreen = () => {
+type Props = { onBack: () => void };
+
+export const EditorScreen = ({ onBack }: Props) => {
   const { state, dispatch } = useEditor();
   const { audioRef, isPlaying, toggle, seekTo } = useAudio();
   const { save } = useSave();
+
+  const handleBack = () => {
+    const hasUnsaved =
+      Object.keys(state.segments).length > 0 && state.saveStatus !== 'saved';
+    if (
+      hasUnsaved &&
+      !window.confirm('You have unsaved changes. Leave anyway?')
+    )
+      return;
+    onBack();
+  };
 
   const sorted = useMemo(
     () => [...state.lines].sort((a, b) => a.index - b.index),
@@ -71,6 +84,7 @@ export const EditorScreen = () => {
         isPlaying={isPlaying}
         toggle={toggle}
         seekTo={seekTo}
+        onBack={handleBack}
       />
       <SaveBar />
 

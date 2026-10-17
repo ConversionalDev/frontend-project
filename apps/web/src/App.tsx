@@ -13,7 +13,7 @@ const App = () => {
   return (
     <EditorProvider initialState={editorState}>
       <TimeProvider>
-        <EditorScreen />
+        <EditorScreen onBack={() => setEditorState(null)} />
       </TimeProvider>
     </EditorProvider>
   );

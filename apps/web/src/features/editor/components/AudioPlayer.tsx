@@ -2,15 +2,24 @@ import { useState } from 'react';
 import type { RefObject } from 'react';
 import { useEditor, useTime } from '../context';
 import { formatTimecode, formatDisplay } from '../utils';
+import { ChevronLeft } from '../../../shared/icons';
+import { KeyboardGuide } from './KeyboardGuide';
 
 type Props = {
   audioRef: RefObject<HTMLAudioElement>;
   isPlaying: boolean;
   toggle: () => void;
   seekTo: (ms: number) => void;
+  onBack: () => void;
 };
 
-export const AudioPlayer = ({ audioRef, isPlaying, toggle, seekTo }: Props) => {
+export const AudioPlayer = ({
+  audioRef,
+  isPlaying,
+  toggle,
+  seekTo,
+  onBack,
+}: Props) => {
   const { state } = useEditor();
   const { currentTimeMs } = useTime();
   const [seekValue, setSeekValue] = useState<number | null>(null);
@@ -34,6 +43,18 @@ export const AudioPlayer = ({ audioRef, isPlaying, toggle, seekTo }: Props) => {
         preload="auto"
         className="hidden"
       />
+
+      {/* Back button */}
+      <button
+        onClick={onBack}
+        className="shrink-0 text-muted hover:text-text transition-colors p-0 border-none bg-transparent"
+        aria-label="Change track"
+        title="Change track"
+      >
+        <ChevronLeft />
+      </button>
+
+      <div className="w-px h-6 bg-border shrink-0" />
 
       {/* Track info */}
       <div className="shrink-0 min-w-0 w-36">
@@ -81,6 +102,10 @@ export const AudioPlayer = ({ audioRef, isPlaying, toggle, seekTo }: Props) => {
       <span className="text-xs font-mono text-muted shrink-0 w-10 text-right">
         {formatDisplay(state.durationMs)}
       </span>
+
+      <div className="w-px h-6 bg-border shrink-0" />
+
+      <KeyboardGuide />
     </div>
   );
 };

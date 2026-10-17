@@ -1,7 +1,25 @@
 import { useRef, useState } from 'react';
 import { ErrorMessage } from '../../../shared/components';
 import { parseLyrics, getAudioDuration } from '../utils';
-import type { TrackLoadedPayload } from '../types';
+import type { Line, Segment, TrackLoadedPayload } from '../types';
+
+const CUSTOM_LS_KEY = (trackId: string) => `lyric-align-custom-${trackId}`;
+
+type StoredCustomTrack = {
+  version: number;
+  lines: Line[];
+  alignment: { segments: Segment[] } | null;
+};
+
+const restoreCustomTrack = (trackId: string): StoredCustomTrack | null => {
+  try {
+    const raw = localStorage.getItem(CUSTOM_LS_KEY(trackId));
+    if (!raw) return null;
+    return JSON.parse(raw) as StoredCustomTrack;
+  } catch {
+    return null;
+  }
+};
 
 type Props = {
   onLoad: (payload: TrackLoadedPayload) => void;
@@ -31,7 +49,9 @@ export const CustomTrackForm = ({ onLoad }: Props) => {
       setError('Select an audio file');
       return;
     }
-    if (!lyricsText.trim()) {
+    const trackId = `custom-${selectedFile.name}-${selectedFile.size}`;
+    const hasSavedSession = restoreCustomTrack(trackId) !== null;
+    if (!hasSavedSession && !lyricsText.trim()) {
       setError('Paste your lyrics');
       return;
     }
@@ -43,16 +63,20 @@ export const CustomTrackForm = ({ onLoad }: Props) => {
     try {
       audioSrc = URL.createObjectURL(selectedFile);
       const durationMs = await getAudioDuration(audioSrc);
-      const lines = parseLyrics(lyricsText);
+      const stored = restoreCustomTrack(trackId);
+      const lines = stored?.lines ?? parseLyrics(lyricsText);
+      const segments = Object.fromEntries(
+        (stored?.alignment?.segments ?? []).map((s) => [s.line_id, s]),
+      );
       onLoad({
-        trackId: `custom-${Date.now()}`,
+        trackId,
         title: selectedFile.name.replace(/\.[^.]+$/, ''),
         artist: 'Unknown',
         durationMs,
         audioSrc,
         lines,
-        segments: {},
-        version: 0,
+        segments,
+        version: stored?.version ?? 0,
         isCustomTrack: true,
       });
     } catch (err) {

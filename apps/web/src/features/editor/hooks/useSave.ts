@@ -31,7 +31,11 @@ export const useSave = () => {
     if (s.isCustomTrack) {
       localStorage.setItem(
         CUSTOM_LS_KEY(s.trackId),
-        JSON.stringify(Object.values(s.segments)),
+        JSON.stringify({
+          version: s.version,
+          lines: s.lines,
+          alignment: { segments: Object.values(s.segments) },
+        }),
       );
       dispatch({ type: 'SAVE_SUCCEEDED', payload: { version: s.version } });
       return;
