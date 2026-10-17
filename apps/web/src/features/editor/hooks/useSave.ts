@@ -22,15 +22,16 @@ export const useSave = () => {
     dispatch({ type: 'SAVE_STARTED' });
 
     if (s.isCustomTrack) {
+      const nextVersion = s.version + 1;
       localStorage.setItem(
         CUSTOM_LS_KEY(s.trackId),
         JSON.stringify({
-          version: s.version,
+          version: nextVersion,
           lines: s.lines,
           alignment: { segments: Object.values(s.segments) },
         }),
       );
-      dispatch({ type: 'SAVE_SUCCEEDED', payload: { version: s.version } });
+      dispatch({ type: 'SAVE_SUCCEEDED', payload: { version: nextVersion } });
       return;
     }
 

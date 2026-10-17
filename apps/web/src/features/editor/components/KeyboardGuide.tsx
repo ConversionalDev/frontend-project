@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Close } from '../../../shared/icons';
 
 const SHORTCUTS = [
   { keys: ['Space'], description: 'Play / Pause' },
@@ -42,21 +43,26 @@ export const KeyboardGuide = () => {
               <h2 className="text-sm font-semibold">Keyboard shortcuts</h2>
               <button
                 onClick={() => setOpen(false)}
-                className="text-muted hover:text-text text-lg leading-none border-none bg-transparent p-0"
+                className="text-muted hover:text-text border-none bg-transparent p-0"
                 aria-label="Close"
               >
-                ×
+                <Close />
               </button>
             </div>
 
-            <ul className="flex flex-col gap-3">
+            <ul className="grid grid-cols-[1fr_auto] gap-x-6 gap-y-3">
               {SHORTCUTS.map(({ keys, description }) => (
-                <li
-                  key={description}
-                  className="flex items-center justify-between gap-4"
-                >
-                  <span className="text-sm text-muted">{description}</span>
-                  <span className="flex items-center gap-1 shrink-0">
+                <>
+                  <span
+                    key={`${description}-label`}
+                    className="text-sm text-muted self-center"
+                  >
+                    {description}
+                  </span>
+                  <span
+                    key={`${description}-keys`}
+                    className="flex items-center gap-1 justify-end"
+                  >
                     {keys.map((k) => (
                       <Key
                         key={k}
@@ -64,7 +70,7 @@ export const KeyboardGuide = () => {
                       />
                     ))}
                   </span>
-                </li>
+                </>
               ))}
             </ul>
           </div>
