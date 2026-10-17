@@ -335,4 +335,24 @@ Consumers import from the folder, not the file: `import { LyricLine } from '../c
 
 ---
 
+---
+
+## Phase 4 implementation decisions
+
+### 29. Barrel `index.ts` exports only the public API, not internal sub-components
+
+**Decision:** `components/index.ts` exports only what is consumed from outside the folder (`AudioPlayer`, `CustomTrackForm`, `Inspector`, `LyricsList`, `WaveformDecor`). Internal components (`NudgeRow`, `Section`, `SingleLinePanel`, `MultiLinePanel`) import each other directly and are not re-exported.
+
+**Why:** A barrel that exports everything leaks implementation details and makes it harder to know what is safe to change. If a sub-component of `Inspector` needs to be renamed or merged, only `Inspector.tsx` changes — no barrel update needed and no external caller is affected. This treats the barrel as a published surface, not a file-listing tool.
+
+---
+
+### 30. Nudge clamping with a 100ms minimum segment duration
+
+**Decision:** When nudging start, the new value is clamped to `max(0, min(start + delta, end - 100))`. When nudging end, it is clamped to `max(start + 100, min(end + delta, durationMs))`. This enforces a minimum segment duration of 100ms.
+
+**Why:** The server requires `end_ms > start_ms`. A zero-duration or negative-duration segment would be invalid. 100ms is the smallest nudge increment, so clamping at 100ms ensures a nudge that would collapse the segment is silently absorbed rather than producing an invalid state.
+
+---
+
 _This file is updated as each significant decision is made during implementation._
