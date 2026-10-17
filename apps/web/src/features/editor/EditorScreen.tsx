@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useEditor } from './context';
 import { useAudio } from './hooks';
-import { AudioPlayer, LyricsList } from './components';
+import { AudioPlayer, Inspector, LyricsList } from './components';
 import { useKeyboard } from '../../shared/hooks';
 import { toMs } from './utils';
 
@@ -54,7 +54,7 @@ export const EditorScreen = () => {
 
       <div className="flex-1 flex overflow-hidden">
         <LyricsList seekTo={seekTo} />
-        {/* Phase 4: Inspector panel goes here */}
+        <Inspector />
       </div>
     </div>
   );

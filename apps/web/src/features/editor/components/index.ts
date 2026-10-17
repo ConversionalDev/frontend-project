@@ -1,5 +1,5 @@
 export { AudioPlayer } from './AudioPlayer';
 export { CustomTrackForm } from './CustomTrackForm';
-export { LyricLine } from './LyricLine';
+export { Inspector } from './Inspector';
 export { LyricsList } from './LyricsList';
 export { WaveformDecor } from './WaveformDecor';
