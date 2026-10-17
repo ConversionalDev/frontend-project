@@ -19,9 +19,10 @@ export const payloadToInitialState = (
   payload: TrackLoadedPayload,
 ): EditorState => {
   const firstLine = [...payload.lines].sort((a, b) => a.index - b.index)[0];
+  const hasExistingSegments = Object.keys(payload.segments).length > 0;
   return {
     ...payload,
-    saveStatus: 'idle',
+    saveStatus: hasExistingSegments ? 'saved' : 'idle',
     saveError: null,
     selectedLineIds: new Set(firstLine ? [firstLine.id] : []),
     focusedLineId: firstLine?.id ?? null,

@@ -73,6 +73,7 @@ export const reducer = (
 
       return {
         ...state,
+        saveStatus: 'idle',
         segments: newSegments,
         focusedLineId: nextFocus?.id ?? null,
         selectedLineIds: new Set(nextFocus ? [nextFocus.id] : []),
@@ -84,6 +85,7 @@ export const reducer = (
       if (!state.segments[lineId]) return state;
       return {
         ...state,
+        saveStatus: 'idle',
         segments: {
           ...state.segments,
           [lineId]: { line_id: lineId, start_ms: startMs, end_ms: endMs },
@@ -104,14 +106,14 @@ export const reducer = (
         newSegments[lineId] = { ...seg, start_ms: newStart, end_ms: newEnd };
       }
 
-      return { ...state, segments: newSegments };
+      return { ...state, saveStatus: 'idle', segments: newSegments };
     }
 
     case 'SEGMENT_DELETED': {
       const { lineId } = action.payload;
       const newSegments = { ...state.segments };
       delete newSegments[lineId];
-      return { ...state, segments: newSegments };
+      return { ...state, saveStatus: 'idle', segments: newSegments };
     }
 
     case 'LINE_FOCUSED':
