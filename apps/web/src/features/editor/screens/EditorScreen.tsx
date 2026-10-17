@@ -1,7 +1,13 @@
 import { useMemo } from 'react';
 import { useEditor } from '../context';
 import { useAudio, useSave } from '../hooks';
-import { AudioPlayer, Inspector, LyricsList, SaveBar } from '../components';
+import {
+  AudioPlayer,
+  Inspector,
+  KaraokeBar,
+  LyricsList,
+  SaveBar,
+} from '../components';
 import { useKeyboard } from '../../../shared/hooks';
 import { toMs } from '../utils';
 
@@ -69,6 +75,8 @@ export const EditorScreen = () => {
         <LyricsList seekTo={seekTo} />
         <Inspector />
       </div>
+
+      <KaraokeBar />
     </div>
   );
 };
