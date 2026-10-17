@@ -489,4 +489,68 @@ Consumers import from the folder, not the file: `import { LyricLine } from '../c
 
 ---
 
+---
+
+## Post-phase-8 decisions
+
+### 42. Back button with unsaved-changes confirmation
+
+**Decision:** A chevron-left button in the `AudioPlayer` header navigates back to the load screen. If there are segments AND `saveStatus !== 'saved'`, a native `window.confirm` is shown first.
+
+**Why native confirm:** A custom modal would require building a second layer of state and a separate component. `window.confirm` is synchronous, universally understood, and sufficient for a single-question guard. The cost of a one-line implementation vs a modal is not justified here.
+
+---
+
+### 43. `saveStatus` initialised to `'saved'` when loading with existing segments
+
+**Decision:** `payloadToInitialState` sets `saveStatus: 'saved'` when the loaded payload has segments, and `'idle'` when it has none. Edit actions (`LINE_STAMPED`, `SEGMENT_UPDATED`, `SEGMENTS_NUDGED`, `SEGMENT_DELETED`) reset `saveStatus` back to `'idle'`.
+
+**Why:** Without this, loading a seeded track with existing alignment (or a custom track with a restored session) would immediately trigger the back-button confirmation even though the user had changed nothing. `'saved'` on load with segments is semantically correct — the data came from a saved source.
+
+---
+
+### 44. Custom track localStorage stores full `{ version, lines, alignment }` shape
+
+**Decision:** `useSave` writes `{ version, lines, alignment: { segments } }` to localStorage — the same shape the server returns from GET `/api/v1/track`. `CustomTrackForm` reads this shape on reload, restoring both lines and segments.
+
+**Why:** Storing only segments (original approach) required the user to re-paste lyrics on every reload and made line ID matching fragile. Storing lines means the user only needs to pick the audio file — lyrics are restored automatically. It also means the restore path is structurally identical to `apiTrackToPayload`, keeping one mental model for both seeded and custom tracks.
+
+**Side effect:** Since lyrics are restored, `generateId()` is safe to use again — IDs are generated once on first load and persisted with the lines, so they are stable across subsequent sessions.
+
+---
+
+### 45. Keyboard shortcuts guide in a `?` modal
+
+**Decision:** A `?` button at the right of the audio player header opens a modal listing all keyboard shortcuts. Clicking the backdrop or `×` closes it.
+
+**Why:** Six non-obvious shortcuts (Space, Enter, arrows, Shift+click, double-click, Cmd+S) are enough to warrant a discoverable reference. A modal keeps it out of the way until needed. The `KeyboardGuide` component is internal to `AudioPlayer` and not exported from the barrel.
+
+---
+
+### 46. Escape hatch to override a detected saved session
+
+**Decision:** When `CustomTrackForm` detects a previous session for the selected file, it hides the lyrics textarea and shows an info banner. A "Paste different lyrics instead" text-button lets the user dismiss the session and re-enter lyrics manually.
+
+**Why the default is restore:** Auto-restoring is the right behaviour for the 95% case — the user picks the same file and expects to continue where they left off. Requiring them to confirm or re-paste every time defeats the point of saving.
+
+**Why the escape hatch:** Locking the user into a restore with no way out is a trap if the saved lyrics are wrong or the user wants to restart from scratch. The button clears `savedSession` state and reveals the textarea. No data is deleted from localStorage — the previous session can still be restored by re-selecting the file if the user changes their mind.
+
+---
+
+### 47. Types in `types/`, pure transforms in `utils/` — never in component or hook files
+
+**Decision:** A firm rule: data shape types live in `types/`, pure data-transform functions live in `utils/`. Component files contain only JSX, local state, and event handlers. Hook files contain only hook logic.
+
+**Examples applied during this project:**
+- `StoredCustomTrack` type: `CustomTrackForm.tsx` → `types/editor.ts`
+- `restoreCustomTrack`, `trackIdFor`, `CUSTOM_LS_KEY`: `CustomTrackForm.tsx` → `utils/track.ts`
+- `toSegmentsMap` (pure transform): `useSave.ts` → `utils/track.ts`
+- Duplicate `ApiSegment` in `useSave.ts` removed — the identical `Segment` type already existed in `types/`
+
+**Why:** When a helper (e.g. `CUSTOM_LS_KEY`) is needed by two files (`CustomTrackForm` for restore, `useSave` for write), it must live in a shared file — not be duplicated. Pure transforms in `utils/` are independently testable and reusable. This is the same principle as decision #36 (barrel as public API): each folder has one clear responsibility.
+
+**What stays local:** Implementation-private types (`EditorContextValue`, `TimeContextValue`, `AlignmentResponse`) and private helpers (`linesByIndex`, `indicesForIds`, `toSegmentsMap` before extraction) that are used by only one file stay in that file. The rule triggers when something crosses a file boundary or belongs structurally in a designated folder.
+
+---
+
 _This file is updated as each significant decision is made during implementation._
