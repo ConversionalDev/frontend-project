@@ -52,6 +52,7 @@ export const EditorScreen = ({ onBack }: Props) => {
       },
       Enter: () => {
         if (!state.focusedLineId || !audioRef.current) return;
+        if (audioRef.current.readyState < 1) return;
         dispatch({
           type: 'LINE_STAMPED',
           payload: {

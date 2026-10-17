@@ -58,6 +58,12 @@ export const useSave = () => {
             version: data.version,
           },
         });
+      } else if (err instanceof ApiError && err.status === 400) {
+        const hint = (err.body as { hint?: string })?.hint;
+        dispatch({
+          type: 'SAVE_FAILED',
+          payload: { error: hint ?? 'Invalid request' },
+        });
       } else {
         dispatch({
           type: 'SAVE_FAILED',
