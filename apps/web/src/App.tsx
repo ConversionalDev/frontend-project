@@ -1,39 +1,119 @@
-import { useEffect, useState } from 'react';
-import { api, ApiError } from './api';
-
-/**
- * Deliberately partial. These are the only fields this placeholder reads; the
- * payload has a good deal more in it. Type the rest as you need it.
- */
-type Track = {
-  title: string;
-  audio_url: string;
-  lines: unknown[];
-};
+import { useCallback, useEffect, useRef } from "react";
+import Topbar from "./components/Topbar";
+import LyricsPanel from "./components/lyrics/LyricsPanel";
+import AudioScreen from "./components/AudioScreen";
+import LineDetailsPanel from "./components/LineDetailsPanel";
+import Spinner from "./components/common/Spinner";
+import Button from "./components/common/Button";
+import styles from "./App.module.css";
+import { useEditorStore } from "./data-alignment/store";
+import { useTimingState } from "./hooks/useTimingState";
+import { useHistoryShortcuts } from "./hooks/useHistoryShortcuts";
+import { useShallow } from "zustand/shallow";
 
 export default function App() {
-  const [track, setTrack] = useState<Track | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  useHistoryShortcuts();
+  const { error, loadTracks, selectLine, stampLine } = useEditorStore(
+    useShallow((s) => ({
+      error: s.error,
+      loadTracks: s.loadTracks,
+      selectLine: s.selectLine,
+      stampLine: s.stampLine,
+    }))
+  );
+  const { track, startTimesMs } = useTimingState();
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    let live = true;
-    api<Track>('/api/v1/track')
-      .then((t) => { if (live) setTrack(t); })
-      .catch((e: unknown) => {
-        if (!live) return;
-        setError(e instanceof ApiError ? `${e.message} ${JSON.stringify(e.body)}` : String(e));
-      });
-    return () => { live = false; };
-  }, []);
+    loadTracks();
+  }, [loadTracks]);
 
-  if (error) return <p>{error}</p>;
-  if (!track) return <p>Loading…</p>;
+  const playLine = (lineId: string) => {
+    const audio = audioRef.current;
+    const startMs = startTimesMs[lineId];
+
+    if (!audio || startMs === undefined) return;
+    selectLine(lineId);
+    audio.currentTime = startMs / 1000;
+    void audio.play();
+  };
+
+  // Stamps the selected line with the playback time, only while the song plays.
+  // Used by the Space shortcut and the stamp button.
+  const stampNow = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio || audio.paused) return;
+
+    stampLine(audio.currentTime);
+  }, [stampLine]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        !["Space", "KeyP"].includes(e.code) ||
+        e.repeat ||
+        e.ctrlKey ||
+        e.metaKey ||
+        e.altKey
+      )
+        return;
+
+      if (
+        e.target instanceof HTMLElement &&
+        (e.target.closest(
+          "input, textarea, select, button, a, audio, [role='button'], dialog"
+        ) ||
+          e.target.isContentEditable)
+      ) {
+        return;
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.code === "Space") stampNow();
+      else {
+        const audio = audioRef.current;
+        if (!audio) return;
+        if (audio.paused) void audio.play().catch(() => {});
+        else audio.pause();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown, true);
+    };
+  }, [stampNow]);
+
+  // Save errors show in the top bar; these screens are only for before the track loads.
+  if (!track && error) {
+    return (
+      <div className={styles.loader}>
+        <h1>Couldn't open the editor</h1>
+        <p role="alert">{error}</p>
+        <Button onClick={loadTracks}>Try again</Button>
+      </div>
+    );
+  }
+  if (!track) {
+    return (
+      <div className={styles.loader} role="status">
+        <Spinner className={styles.spinner} />
+        <span>Loading editor…</span>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <h1>{track.title}</h1>
-      <p>{track.lines.length} lines</p>
-      <audio controls src={track.audio_url} />
-    </>
+    <div className={styles.editor}>
+      <Topbar />
+
+      <div className={styles.editorContent}>
+        <LyricsPanel onPlayLine={playLine} />
+        <AudioScreen audioRef={audioRef} onStamp={stampNow} />
+        <LineDetailsPanel onPlayLine={playLine} />
+      </div>
+    </div>
   );
 }

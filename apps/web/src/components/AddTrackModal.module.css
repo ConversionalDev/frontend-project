@@ -1,0 +1,47 @@
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.formTitle {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+/* The file input isn't a TextField, but looks like one. */
+.fileField {
+  composes: field from "./common/TextField.module.css";
+}
+
+.fileLabel {
+  composes: label from "./common/TextField.module.css";
+}
+
+/* The stored file in edit mode: shaped like a field, but read-only. */
+.audioFile {
+  composes: input from "./common/TextField.module.css";
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--bg);
+  color: var(--text-muted);
+}
+
+.audioFile svg {
+  flex-shrink: 0;
+  width: 1.125em;
+  height: 1.125em;
+  color: var(--accent);
+}
+
+.audioFile span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}

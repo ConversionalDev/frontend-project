@@ -1,0 +1,52 @@
+.editor {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.editorContent {
+  display: grid;
+  grid-template-columns: minmax(300px, 350px) minmax(0, 1fr) 280px;
+  grid-template-areas: "lyrics audio details";
+  flex: 1;
+  min-height: 0;
+}
+
+.loader {
+  min-height: 100dvh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  color: var(--accent);
+}
+
+@media (max-width: 1200px) {
+  .editor {
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  .editorContent {
+    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-areas: "lyrics audio" "lyrics details";
+    grid-template-rows: auto 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .editorContent {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "audio" "lyrics" "details";
+    grid-template-rows: auto;
+  }
+}
